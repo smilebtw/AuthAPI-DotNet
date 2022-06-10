@@ -30,16 +30,23 @@ namespace AuthAPI.Controllers
                 Status = 0
             }
         };
+        private readonly DataContext _context;
+
+        public AuthController(DataContext context)
+        {
+            _context = context;
+        }
+
         [HttpGet]
         public async Task<ActionResult<List<Auth>>> Get()
         {
-            return Ok(users);
+            return Ok(await _context.usuarios.ToListAsync());
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Auth>> Get(int id)
         {
-            var user = users.Find(x => x.Id == id);
+            var user = await _context.usuarios.FindAsync(id);
             if (user == null)
             {
                 return BadRequest("User not found");
@@ -49,39 +56,45 @@ namespace AuthAPI.Controllers
 
         [HttpPost]
         public async Task<ActionResult<List<Auth>>> AddUser(Auth user)
-        {   
-            users.Add(user);
-            return Ok(users);
+        {
+            _context.usuarios.Add(user);
+            await _context.SaveChangesAsync();
+            return Ok(await _context.usuarios.ToListAsync());
         }
 
         [HttpPut]
         public async Task<ActionResult<Auth>> UpdateUser(Auth request)
         {
-            var user = users.Find(x => x.Id == request.Id);
-            if (user == null)
+            var dbUser = await _context.usuarios.FindAsync(request.Id);
+            if (dbUser == null)
             {
                 return BadRequest("User not found");
             }
-            user.Name = request.Name;
-            user.Email = request.Email;
-            user.Password = request.Password;
-            user.CodigoRh = request.CodigoRh;
-            user.Status = request.Status;
-            user.Cpf = request.Cpf;
+            dbUser.Name = request.Name;
+            dbUser.Email = request.Email;
+            dbUser.Password = request.Password;
+            dbUser.CodigoRh = request.CodigoRh;
+            dbUser.Status = request.Status;
+            dbUser.Cpf = request.Cpf;
 
-            return Ok(users);
+            await _context.SaveChangesAsync();
+
+            return Ok(await _context.usuarios.ToListAsync());
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteUser(int id)
         {
-            var user = users.Find(x => x.Id == id);
-            if (user == null)
+            var dbUser = await _context.usuarios.FindAsync(id);
+            if (dbUser == null)
             {
                 return BadRequest("User not found");
             }
-            users.Remove(user);
-            return Ok(users);
+            _context.usuarios.Remove(dbUser);
+            await _context.SaveChangesAsync();
+
+
+            return Ok(await _context.usuarios.ToListAsync());
         }
     }
 }
